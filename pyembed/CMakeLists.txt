@@ -17,9 +17,12 @@ target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
 set(DOWNLOADED_PYTHON_EMBED_ZIP ${CMAKE_BINARY_DIR}/python-${PYTHON_VERSION}-embed-amd64.zip)
 set(DOWNLOAD_URL https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-embed-amd64.zip)
 
-file(DOWNLOAD ${DOWNLOAD_URL} ${DOWNLOADED_PYTHON_EMBED_ZIP}
-    TIMEOUT 60  # seconds
-    TLS_VERIFY ON)
+if(NOT EXISTS ${DOWNLOADED_PYTHON_EMBED_ZIP})
+    file(DOWNLOAD ${DOWNLOAD_URL} ${DOWNLOADED_PYTHON_EMBED_ZIP}
+        TIMEOUT 60  # seconds
+        TLS_VERIFY ON
+    )
+endif()
 
 if(MSVC)
     file(ARCHIVE_EXTRACT INPUT ${DOWNLOADED_PYTHON_EMBED_ZIP}
