@@ -29,8 +29,8 @@ int main(int argc, char* argv[])
 	insertPath(2, (workingDir / MODULES).wstring());
 
 	try {
-		auto pyapp = py::module::import(EMBEDDED_MODULE_NAME);
-		sys.attr("meta_path").attr("append")(pyapp.attr("CustomImporter")());
+		// auto pyapp = py::module::import(EMBEDDED_MODULE_NAME);
+		// sys.attr("meta_path").attr("append")(pyapp.attr("CustomImporter")());
 		//py::module::import("other");
 
 		//py::exec(startup);

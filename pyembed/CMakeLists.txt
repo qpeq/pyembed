@@ -1,12 +1,10 @@
 cmake_minimum_required(VERSION 3.16)
 
-list(APPEND BUILD_FILES 
-    source/main.cpp
-)
-
 find_package(Python3 COMPONENTS Development)
 
-add_executable(${PROJECT_NAME} ${BUILD_FILES})
+add_executable(${PROJECT_NAME}
+    source/main.cpp
+)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
@@ -16,11 +14,20 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PRIVATE include)
 target_link_libraries(${PROJECT_NAME} PRIVATE pybind11::embed)
 
+set(DOWNLOADED_PYTHON_EMBED_ZIP ${CMAKE_BINARY_DIR}/python-${PYTHON_VERSION}-embed-amd64.zip)
+
+file(DOWNLOAD https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-embed-amd64.zip ${CMAKE_BINARY_DIR}/python-${PYTHON_VERSION}-embed-amd64.zip
+    TIMEOUT 60  # seconds
+    TLS_VERIFY ON)
+
 if(MSVC)
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy
-            ${CMAKE_BINARY_OUTPUT_DIRECTORY}/$<TARGET_FILE_NAME:${PROJECT_NAME}>
-            ../../$<TARGET_FILE_NAME:${PROJECT_NAME}>
-)
+    file(ARCHIVE_EXTRACT INPUT ${DOWNLOADED_PYTHON_EMBED_ZIP}
+        DESTINATION ${CMAKE_BINARY_DIR}/bin
+        PATTERNS python39.zip python39.dll vcruntime140.dll
+    )
+else()
+    file(ARCHIVE_EXTRACT INPUT ${DOWNLOADED_PYTHON_EMBED_ZIP}
+        DESTINATION ${CMAKE_BINARY_DIR}/bin
+        PATTERNS python39.zip
+    )
 endif()
