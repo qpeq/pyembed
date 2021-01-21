@@ -1,32 +1,53 @@
+#include <string>
 #include <iostream>
 #include <filesystem>
 #include <pybind11/embed.h>
 namespace py = pybind11;
 namespace fs = std::filesystem;
 
-const fs::path MODULES = "modules";
-const fs::path BUILTIN = MODULES / "builtins";
-const fs::path ZIPPED = BUILTIN / "modules.pkg";
-
-const char* MAIN_MODULE = "main";
-const char* MAIN_FUNC = "entry";
+const char* MAIN_MODULE = "startup";
+const char* MAIN_FUNC = "main";
 const char* EMBEDDED_MODULE_NAME = "pyapp";
+
+#if defined (_MSC_VER)
+	const std::wstring DELIMITER = L";";
+#else
+	const std::wstring DELIMITER = L":";
+#endif
+
+void set_py_sys_path()
+{
+	auto working_dir = fs::current_path();
+	std::vector<fs::path> sys_path {
+		working_dir / "builtins" / "packages.pkg",
+		working_dir / "builtins",
+		working_dir / "modules"
+	};
+
+	std::wstring module_search_path;
+	for (const auto &path: sys_path) {
+		if (!module_search_path.empty()) {
+			module_search_path.append(DELIMITER);
+			module_search_path.append(path.wstring());
+		}
+		else {
+			module_search_path = path.wstring();
+		}
+	}
+
+	Py_SetPath(module_search_path.c_str());
+}
 
 int main(int argc, char* argv[])
 {
-	auto workingDir = fs::current_path();
-	Py_SetPath((workingDir / ZIPPED).wstring().c_str());
+	set_py_sys_path();
 
 	py::scoped_interpreter interpreter;
 
-	std::vector<std::string> vecArg(argv, argv + argc);
+	std::vector<std::string> args(argv, argv + argc);
 	auto sys = py::module::import("sys");
-	sys.attr("argv") = vecArg;
+	sys.attr("argv") = args;
 	sys.attr("dont_write_bytecode") = true;
-
-	auto insertPath = sys.attr("path").attr("insert");
-	insertPath(1, (workingDir / BUILTIN).wstring());
-	insertPath(2, (workingDir / MODULES).wstring());
 
 	try {
 		// auto pyapp = py::module::import(EMBEDDED_MODULE_NAME);
